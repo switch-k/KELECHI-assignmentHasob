@@ -22,7 +22,7 @@ use App\Http\Controllers\API\SubscriptionController;
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
 Route::get('search',[ProductController::class, 'search']);
-Route::post('subscription', [SubscriptionController::class]);
+Route::get('checkOut', [ProductController::class, 'checkOut']);
 
    
 Route::middleware('auth:api')->group( function () {

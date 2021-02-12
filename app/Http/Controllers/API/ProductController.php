@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Product;
+use App\Models\Cart;
 use Validator;
 use App\Http\Resources\Product as ProductResource;
    
@@ -116,4 +117,17 @@ class ProductController extends BaseController
     
   
 }
+    public function checkOut(Request $request, $id){
+        $product =Product::find($id);
+        $oldCart =Session::has('cart')? Session::get('cart'):null;
+        $cart = new cart($oldCart); 
+        $cart->add($product, $product->id);
+        $request->session()->put('cart', $cart);
+        return response()->json();
+    
+
+
+
+
+   }
 }
