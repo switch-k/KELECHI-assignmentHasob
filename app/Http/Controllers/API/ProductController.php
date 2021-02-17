@@ -6,8 +6,11 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\API\BaseController as BaseController;
 use App\Models\Product;
 use App\Models\Cart;
+use App\Models\checkOut;
+use App\Models\Session;
+
 use Validator;
-use App\Http\Resources\Product as ProductResource;
+
    
 class ProductController extends BaseController
 {
@@ -19,8 +22,17 @@ class ProductController extends BaseController
     public function index()
     {
         $products = Product::all();
+        return response()->json(['data' => $products]);
     
-        return $this->sendResponse(ProductResource::collection($products), 'Products retrieved successfully.');
+        /* return [
+            'id' => $this->product,
+            'name' => $this->name,
+            'detail' => $this->detail,
+            'price' => $this->price,
+            'quantity' => $this->quantity,
+            'created_at' => $this->created_at->format('d/m/Y'),
+            'updated_at' => $this->updated_at->format('d/m/Y'),
+        ]; */
     }
     /**
      * Store a newly created resource in storage.
@@ -45,7 +57,7 @@ class ProductController extends BaseController
    
         $product = Product::create($input);
    
-        return $this->sendResponse(new ProductResource($product), 'Product created successfully.');
+        return response()->json(['data' => $product]);
     } 
    
     /**
@@ -62,7 +74,7 @@ class ProductController extends BaseController
             return $this->sendError('Product not found.');
         }
    
-        return $this->sendResponse(new ProductResource($product), 'Product retrieved successfully.');
+        return response()->json(['data' => $product]);
     }
     
     /**
@@ -93,7 +105,7 @@ class ProductController extends BaseController
         $product->quantity = $input['quantity'];
         $product->save();
    
-        return $this->sendResponse(new ProductResource($product), 'Product updated successfully.');
+        return response()->json(['data' => $product]);
     }
    
     /**
@@ -106,28 +118,50 @@ class ProductController extends BaseController
     {
         $product->delete();
    
-        return $this->sendResponse([], 'Product deleted successfully.');
+        return response()->json(['data' => $product]);
     }
 
     public function search(Request $request){
         $datas= Product::select("name")
-        ->where("name","LIKE","%{$request->terms}%")->get();
+        ->where("name","LIKE","%{$request->terms}%")
+        ->orWhere('description', 'LIKE', "% {'id'} %")
+        ->get();
             return response()->json($datas);
 
     
   
-}
-    public function checkOut(Request $request, $id){
-        $product =Product::find($id);
-        $oldCart =Session::has('cart')? Session::get('cart'):null;
-        $cart = new cart($oldCart); 
-        $cart->add($product, $product->id);
-        $request->session()->put('cart', $cart);
-        return response()->json();
-    
+        }
+      
+    public function checkout(Request $request)  {
+        $input = $request->all();
+   
+        $validator = Validator::make($input, [
+            'cartItems' => 'required|array',
+            'total' => 'required|numeric',
+        ]);
+        
+        if($validator->fails()){
+            return $this->sendError('Validation Error.', $validator->errors());       
+        }
 
+       
+        $checkout = checkOut::create([
+            'total' => $request->total,
+            'user_id' => auth()->id()
+        ]);
 
+        $cartItems = $request->cartItems;
+        for ($i = 0; $i < count($cartItems); $i++) {
+            $item = $cartItems[$i];
+            Cart::create([
+                'checkout_id' => $checkout['id'],
+                'product_id' => $item['id'],
+                'quantity' => $item['quantity'],
+                'price' => $item['price'],
+                'sub_total' => $item['sub_total']
+            ]);
+        }
 
-
-   }
+        return response('Checkout was added successfuly');
+    }
 }

@@ -2,10 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\API\RegisterController;
 use App\Http\Controllers\API\ProductController;
-use App\Http\Controllers\API\SubscriptionController;
+use App\Http\Controllers\API\RegisterController;
+
 
 
 /*
@@ -21,13 +20,15 @@ use App\Http\Controllers\API\SubscriptionController;
 
 Route::post('register', [RegisterController::class, 'register']);
 Route::post('login', [RegisterController::class, 'login']);
-Route::get('search',[ProductController::class, 'search']);
-Route::get('checkOut', [ProductController::class, 'checkOut']);
+Route::get('search/{id}',[ProductController::class, 'show']);
+Route::post('checkout', [ProductController::class, 'checkout']);
 
    
-Route::middleware('auth:api')->group( function () {
-    Route::resource('products', ProductController::class);
-});
+
+Route::post('store-product', [ProductController::class, 'store']);
+Route::delete('destroy-product', [ProductController::class, 'destroy']);
+Route::get('index-product', [ProductController::class, 'index']);
+Route::put('update-product', [ProductController::class, 'update']);
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
